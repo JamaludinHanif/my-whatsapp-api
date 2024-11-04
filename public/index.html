@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>WhatsApp Gateway</title>
+</head>
+<body>
+    <h1>Scan QR Code</h1>
+    <img id="qr-code-image" src="" alt="QR Code akan muncul di sini" />
+    <h1>Kirim Pesan WhatsApp</h1>
+    <form id="message-form">
+        <input type="text" id="number" placeholder="Masukkan nomor (format internasional)" required />
+        <input type="text" id="message" placeholder="Masukkan pesan" />
+        <input type="text" id="fileUrl" placeholder="Masukkan fileUrl" />
+        <input type="text" id="caption" placeholder="Masukkan caption" />
+        <button type="submit">Kirim Pesan</button>
+    </form>
+    <h2>Hasil:</h2>
+    <pre id="response-output"></pre>
+
+    <script>
+        // Fungsi untuk mengambil QR Code dari server
+        async function fetchQRCode() {
+            try {
+                const response = await fetch("http://localhost:3000/qr-code");
+                const data = await response.json();
+                if (data.status === "success") {
+                    document.getElementById("qr-code-image").src = data.qrCodeUrl;
+                } else {
+                    console.error("Error fetching QR Code:", data.message);
+                }
+            } catch (error) {
+                console.error("Request failed:", error);
+            }
+        }
+
+        // Panggil fungsi untuk mengambil QR Code saat halaman dimuat
+        window.onload = fetchQRCode;
+
+        // Fungsi untuk mengirim pesan
+        document.getElementById("message-form").addEventListener("submit", async function(event) {
+            event.preventDefault();
+            const number = document.getElementById("number").value;
+            const message = document.getElementById("message").value;
+            const fileUrl = document.getElementById("fileUrl").value;
+            const caption = document.getElementById("caption").value;
+            const responseOutput = document.getElementById("response-output");
+
+            try {
+                const response = await fetch("http://localhost:3000/send", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ number, message, fileUrl, caption })
+                });
+                const data = await response.json();
+                responseOutput.textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                responseOutput.textContent = `Error: ${error.message}`;
+            }
+        });
+    </script>
+</body>
+</html>
